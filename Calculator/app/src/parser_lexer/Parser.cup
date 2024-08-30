@@ -1,0 +1,115 @@
+package com.navi.calculator.backend.parser_lexer;
+
+import java_cup.runtime.*;
+import java.util.*;
+import com.navi.calculator.backend.parser_lexer.errors.*;
+import java_cup.runtime.XMLElement;
+
+parser code
+{:
+    public double result = 0;
+    public Parser(Lexer lex) {
+        super(lex);
+    }
+    //Metodo al que se llama ante algun error sintactico
+    public void syntax_error(Symbol s){
+        String lexeme = s.value.toString();
+        int line = s.left;
+        int col = s.right;
+        System.out.println("ERROR SINTÁCTICO RECUPERADO");
+        System.out.println("\tLexeme: " + lexeme);
+        System.out.println("\trow: " + line);
+        System.out.println("\tcol: " + col);
+        HashMap<String, String> symbolNames = Validate.getSymbolNames();
+        List<Integer> tokens = expected_token_ids();
+        String des = "Se esperaba: ";
+        for(Integer i : tokens) {
+            String fromId = symbl_name_from_id(i);
+            String symbolName = symbolNames.get(fromId);
+            if(symbolName != null){
+                des += "'"+symbolName+ "' o ";
+            }
+            else{
+                if(!fromId.equals("error") && !fromId.equals("EOF")){
+                    des += fromId +" o ";
+                }
+            }
+        }
+        if(des.length() > 3) des = des.substring(0, des.length() - 3);
+        addError(lexeme, line, col, des);
+
+    }
+
+    //Metodo que se llama en el momento en que ya no es posible una recuperacion
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{
+        String lexeme = s.value.toString();
+        int line = s.left;
+        int col = s.right;
+        System.out.println("ERROR SINTACTICO NO RECUPERABLE");
+        System.out.println("\tLexeme: " + lexeme);
+        System.out.println("\trow: " + line);
+        System.out.println("\tcol: " + col);
+        HashMap<String, String> symbolNames = Validate.getSymbolNames();
+        List<Integer> tokens = expected_token_ids();
+        String des = "Se esperaba: ";
+        for(Integer i : tokens) {
+            String fromId = symbl_name_from_id(i);
+            String symbolName = symbolNames.get(fromId);
+            if(symbolName != null){
+                des += "'"+symbolName+ "' o ";
+            }
+            else{
+                if(!fromId.equals("error") && !fromId.equals("EOF")){
+                    des += fromId +" o ";
+                }
+            }
+        }
+        if(des.length() > 3) des = des.substring(0, des.length() - 3);
+        addError(lexeme, line, col, des);
+    }
+
+    private void addError(String lexeme, int line, int col, String description){
+        ErrorsLP.addError(lexeme, line, col, "Error Sintáctico", description);
+    }
+    protected int error_sync_size() {
+            return 1;
+    }
+:}
+
+terminal PLUS, MINUS, TIMES, DIVISION, LPAREN, RPAREN;
+
+terminal Double DIGIT;
+
+non terminal s;
+
+non terminal Double expr;
+
+
+//Presedencia
+precedence left PLUS, MINUS;
+precedence left TIMES, DIVISION;
+
+start with s;
+
+s ::= expr:e
+        {:
+        result = e;
+        :}
+        ;
+
+expr ::=  expr:e1 PLUS expr:e2      {: RESULT = e1 + e2; :}
+        | expr:e1 MINUS expr:e2     {: RESULT = e1 - e2; :}
+        | expr:e1 TIMES expr:e2     {: RESULT = e1 * e2; :}
+        | expr:e1 DIVISION expr:e2
+        {:
+        if(e2 != 0) RESULT = e1 / e2;
+        else {
+            addError("0", e2left, e2right, "No puedes divir entre 0");
+            RESULT = (double) 0;
+        }
+        :}
+        | LPAREN expr:e RPAREN      {: RESULT = e; :}
+        | MINUS expr:e              {: RESULT = -e; :}
+        | DIGIT:d                   {: RESULT = d; :}
+        ;
+
