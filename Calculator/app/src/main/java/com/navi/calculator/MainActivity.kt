@@ -27,6 +27,7 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
         //Vincular
         editText = findViewById(R.id.inputExpression)
         compileButton = findViewById(R.id.btnCalculate)

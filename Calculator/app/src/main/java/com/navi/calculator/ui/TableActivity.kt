@@ -3,6 +3,7 @@ package com.navi.calculator.ui
 import android.content.Context
 import android.os.Bundle
 import android.view.Gravity
+import android.view.MenuItem
 import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
@@ -23,11 +24,24 @@ class TableActivity : AppCompatActivity() {
 
         tableLayout = findViewById(R.id.tableLayout)
 
+        // Habilita la flecha de regreso
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+
         for(err in ErrorsLP.getErrors()){
             val newData = arrayOf<Any>(err.lexeme, err.line, err.column, err.type, err.description)
             addRow(this, tableLayout, newData)
         }
 
+    }
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                onBackPressed()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
     private fun addRow(context: Context, tableLayout:TableLayout, rowData:Array<Any>){
         val newRow = TableRow(context)
